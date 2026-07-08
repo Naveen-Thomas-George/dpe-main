@@ -22,6 +22,7 @@ import About from './pages/About';
 import Gallery from './pages/Gallery';
 import PreloaderDemo from './pages/PreloaderDemo';
 import PedagogicLeague from './pages/PedagogicLeague';
+import Committees from './pages/Committees';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -73,6 +74,7 @@ function App() {
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/preloader-demo" element={<PreloaderDemo />} />
                 <Route path="/pedagogic-league" element={<PedagogicLeague />} />
+                <Route path="/committees" element={<Committees />} />
               </Routes>
 
               {/* Comprehensive Structured Footer */}

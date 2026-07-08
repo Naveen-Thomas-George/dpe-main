@@ -1,7 +1,6 @@
 import React from 'react';
 import AuthCard from './AuthCard';
-import Navbar from './Navbar';
-import Footer from './Footer';
+
 
 export default function AuthPage() {
   return (

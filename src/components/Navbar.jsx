@@ -55,10 +55,10 @@ export default function Navbar({ isScrolled }) {
             <span className="absolute bottom-1 left-0 w-0 h-[1.5px] bg-zinc-400 transition-all duration-300 ease-out group-hover:w-full" />
           </Link>
 
-          <a href="#products" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors relative group py-2">
+          <Link to="/committees" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors relative group py-2">
             Committees
             <span className="absolute bottom-1 left-0 w-0 h-[1.5px] bg-zinc-400 transition-all duration-300 ease-out group-hover:w-full" />
-          </a>
+          </Link>
 
           <a href="#pricing" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors relative group py-2">
             Facilities
