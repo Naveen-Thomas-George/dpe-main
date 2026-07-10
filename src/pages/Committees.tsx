@@ -9,7 +9,9 @@ import {
   ChevronRight,
   Users,
   Target,
-  Search
+  Search,
+  BarChart3,
+  Shield
 } from 'lucide-react';
 import PrismBackground from '../components/PrismBackground';
 import { TextGenerateEffect } from '../components/ui/text-generate-effect';
@@ -26,7 +28,7 @@ const COMMITTEES = [
     shortDesc: 'Handling equipment, transport, and ground arrangements.',
     responsibilities: 'Ensuring sports equipment is available, ground preparation, transport for teams, and inventory management.',
     faculty: 'Prof. Logistics Head',
-    studentHeads: ['Logistics Lead 1', 'Inventory Head 2'],
+    studentHeads: ['Arjun Nair', 'Joshua Baby'],
     coreResponsibility: 'Resource & Equipment Operations',
     projects: ['Inventory Audit', 'Ground Revamp'],
     email: 'logistics.dpe@christuniversity.in',
@@ -41,7 +43,7 @@ const COMMITTEES = [
     shortDesc: 'Managing digital presence, data, and technology infrastructure.',
     responsibilities: 'Maintains website, handles player records, manages event registrations, and ensures smooth digital operations during sports events.',
     faculty: 'Prof. Digital Head',
-    studentHeads: ['Tech Lead 1', 'Records Head 2'],
+    studentHeads: ['Naveen Thomas George', 'Paul Joel'],
     coreResponsibility: 'System Administration & Data Management',
     projects: ['Player Tracking System', 'Tournament Portal'],
     email: 'it.dpe@christuniversity.in',
@@ -56,7 +58,7 @@ const COMMITTEES = [
     shortDesc: 'Capturing moments and managing external communications and social media.',
     responsibilities: 'Photography, videography, social media management, and writing press releases for sports events and achievements.',
     faculty: 'Prof. Media Head',
-    studentHeads: ['Media Lead 1', 'PR Head 2'],
+    studentHeads: ['Gautham Shaji', 'Stuthi Harish'],
     coreResponsibility: 'Content Creation & Brand Management',
     projects: ['Sports Newsletter', 'DPE Instagram Reel Series'],
     email: 'media.dpe@christuniversity.in',
@@ -71,7 +73,7 @@ const COMMITTEES = [
     shortDesc: 'Managing external communications, outreach, and securing sponsorships.',
     responsibilities: 'Reaching out to sponsors, managing announcements, and coordinating with external entities for sports events.',
     faculty: 'Prof. PR Head',
-    studentHeads: ['PR Lead 1', 'Outreach Head 2'],
+    studentHeads: ['Ajay Krishna', 'Ashley R S'],
     coreResponsibility: 'Outreach & Sponsorships',
     projects: ['Sponsorship Drive', 'Campus Outreach'],
     email: 'pr.dpe@christuniversity.in',
@@ -86,7 +88,7 @@ const COMMITTEES = [
     shortDesc: 'Designing visual assets, posters, and ensuring aesthetic appeal of events.',
     responsibilities: 'Creating promotional materials, designing event branding, and managing the overall visual aesthetics of DPE.',
     faculty: 'Prof. Creatives Head',
-    studentHeads: ['Design Lead 1', 'Aesthetics Head 2'],
+    studentHeads: ['Nebin ', 'Janaki'],
     coreResponsibility: 'Graphic Design & Aesthetics',
     projects: ['Event Branding', 'Social Media Graphics'],
     email: 'creatives.dpe@christuniversity.in',
@@ -101,17 +103,62 @@ const COMMITTEES = [
     shortDesc: 'Taking care of guests, teams, and officials during events.',
     responsibilities: 'Welcoming visiting teams, arranging refreshments for officials, hosting ceremonies, and managing certificates.',
     faculty: 'Prof. Hospitality Head',
-    studentHeads: ['Hospitality Lead 1', 'Emcee Head 2'],
+    studentHeads: ['Arya Makkat', 'Tanisha'],
     coreResponsibility: 'Guest Management & Hosting',
     projects: ['Chief Guest Protocols', 'Award Ceremonies'],
     email: 'hospitality.dpe@christuniversity.in',
     tags: ['Hospitality', 'Operations'],
     registrationStatus: 'open' as RegStatus
+  },
+  {
+    id: 'data-analytics',
+    name: 'Data Analytics Committee',
+    subtitle: 'PLAYER ANALYTICS, PERFORMANCE DATA & INSIGHTS',
+    icon: BarChart3,
+    shortDesc: 'Analyzing player statistics, match performance, and team performance insights.',
+    responsibilities: 'Analyze player statistics, match performance, tournament data, and team insights. Support coaches and the department with data-driven reports and performance analytics.',
+    faculty: 'Prof. Analytics Head',
+    studentHeads: ['Analytics Lead 1', 'Data Head 2'],
+    coreResponsibility: 'Performance Analytics & Insights',
+    projects: ['Performance Dashboard', 'Tournament Analytics'],
+    email: 'analytics.dpe@christuniversity.in',
+    tags: ['Data Analytics', 'Statistics', 'Performance'],
+    registrationStatus: 'open' as RegStatus
+  },
+  {
+    id: 'discipline-heads',
+    name: 'Discipline Heads ',
+    subtitle: 'SPORT DISCIPLINE & TEAM COORDINATION',
+    icon: Shield,
+    shortDesc: 'Coordinating discipline, practice sessions, and player management for sports teams.',
+    responsibilities: 'Coordinate discipline and communication within each sport. Ensure smooth execution of practice sessions, tournaments, attendance, and player management for every sports team.',
+    faculty: 'Prof. Discipline Head',
+    studentHeads: ['Discipline Lead 1', 'Team Coordinator 2'],
+    coreResponsibility: 'Discipline & Team Coordination',
+    projects: ['Attendance Tracking System', 'Disciplinary Standards'],
+    email: 'discipline.dpe@christuniversity.in',
+    tags: ['Leadership', 'Sports', 'Coordination'],
+    registrationStatus: 'open' as RegStatus
+  },
+  {
+    id: 'student-representatives',
+    name: 'Student Representatives ',
+    subtitle: 'SCHOOL REPRESENTATION & STUDENT ENGAGEMENT',
+    icon: Users,
+    shortDesc: 'Representing school requirements and strengthening student-department interactions.',
+    responsibilities: 'Represent individual schools within the university, communicate student requirements, coordinate participation, and strengthen interaction between students and the Department of Physical Education.',
+    faculty: 'Prof. Student Rep Head',
+    studentHeads: ['Student Rep Lead 1', 'Engagement Head 2'],
+    coreResponsibility: 'School Representation & Engagement',
+    projects: ['Student Requirements Portal', 'School Engagement Drive'],
+    email: 'reps.dpe@christuniversity.in',
+    tags: ['Representation', 'Communication', 'Leadership'],
+    registrationStatus: 'open' as RegStatus
   }
 ];
 
 const STATS = [
-  { label: 'Committees', value: 8, suffix: '' },
+  { label: 'Committees', value: 9, suffix: '' },
   { label: 'Volunteers', value: 150, suffix: '+' },
   { label: 'Events Organized', value: 35, suffix: '+' },
   { label: 'Students Engaged', value: 1000, suffix: '+' }
@@ -283,7 +330,7 @@ export default function Committees() {
         </motion.div>
 
         {/* 2. Committee Overview Grid */}
-        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
+        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-32">
           <AnimatePresence mode="popLayout">
             {filteredCommittees.map((committee, idx) => (
               <motion.div
