@@ -19,16 +19,61 @@ interface TimelineProps {
 }
 
 export const Timeline = ({ data, title, description }: TimelineProps) => {
+  // Positioning context for the vertical line
   const ref = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // State variables to store the calculated start offset (top) and height of the vertical line
   const [height, setHeight] = useState(0);
+  const [startY, setStartY] = useState(0);
+
+  // Refs to measure the first and last marker elements dynamically
+  const firstMarkerRef = useRef<HTMLDivElement | null>(null);
+  const lastMarkerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let frameId: number;
+    const updateDimensions = () => {
+      if (ref.current && firstMarkerRef.current && lastMarkerRef.current) {
+        const containerRect = ref.current.getBoundingClientRect();
+        const firstRect = firstMarkerRef.current.getBoundingClientRect();
+        const lastRect = lastMarkerRef.current.getBoundingClientRect();
+
+        // Calculate center positions relative to the container top.
+        // Reading getBoundingClientRect() directly on scroll captures the actual 
+        // real-time visual coordinate of the dots even as they stick/unstick.
+        const firstCenterY = firstRect.top - containerRect.top + firstRect.height / 2;
+        const lastCenterY = lastRect.top - containerRect.top + lastRect.height / 2;
+
+        setStartY(firstCenterY);
+        setHeight(lastCenterY - firstCenterY);
+      }
+    };
+
+    const handleScroll = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(updateDimensions);
+    };
+
+    updateDimensions();
+
+    // Use ResizeObserver to automatically recalculate dimensions when elements reflow or resize
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
     if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      setHeight(rect.height);
+      resizeObserver.observe(ref.current);
     }
-  }, [ref]);
+
+    // Attach scroll listener to update line boundaries dynamically as sticky nodes float
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+      cancelAnimationFrame(frameId);
+    };
+  }, [data]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -60,10 +105,15 @@ export const Timeline = ({ data, title, description }: TimelineProps) => {
         {data.map((item, index) => (
           <div
             key={index}
-            className="flex justify-start pt-10 md:pt-40 md:gap-10"
+            // Explicitly relative parent wrapper to constrain the sticky boundary to this item's height
+            className="relative flex justify-start pt-10 md:pt-40 md:gap-10"
           >
+            {/* Year/dot container is sticky inside its relative parent, so it scrolls away naturally with its content */}
             <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
-              <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-zinc-900/80 backdrop-blur-md flex items-center justify-center border border-zinc-700/50 shadow-xl">
+              <div 
+                ref={index === 0 ? firstMarkerRef : index === data.length - 1 ? lastMarkerRef : null}
+                className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-zinc-900/80 backdrop-blur-md flex items-center justify-center border border-zinc-700/50 shadow-xl"
+              >
                 <div className="h-4 w-4 rounded-full bg-zinc-400 border-2 border-zinc-300 p-2 shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
               </div>
               <h3 className="hidden md:block text-xl md:pl-20 md:text-6xl font-black text-zinc-500/50 tracking-tighter drop-shadow-sm">
@@ -79,12 +129,17 @@ export const Timeline = ({ data, title, description }: TimelineProps) => {
             </div>
           </div>
         ))}
+        
+        {/* Absolutely positioned single line track starting and ending precisely at first and last dot centers */}
+        {/* Changed bg-neutral-800 to bg-transparent to remove the background track line completely */}
         <div
           style={{
+            top: startY + "px",
             height: height + "px",
           }}
-          className="absolute md:left-8 left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-neutral-200 dark:via-neutral-700 to-transparent to-[99%]  [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)] "
+          className="absolute md:left-8 left-8 overflow-hidden w-[2px] bg-transparent"
         >
+          {/* Animated active scroll progress line (rendered as the only vertical line) */}
           <motion.div
             style={{
               height: heightTransform,
