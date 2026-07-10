@@ -49,13 +49,13 @@ export default function Hero({ media, title, subtitle, actionText, onActionClick
       />
 
       {/* Foreground Content */}
-      <div className="relative z-20 flex flex-col items-center justify-center text-center px-6 max-w-5xl">
-        <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none tracking-tighter text-zinc-50 drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] uppercase">
+      <div className="relative z-20 flex flex-col items-center justify-center text-center px-4 max-w-5xl">
+        <h1 className="text-3xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none tracking-tighter text-zinc-50 drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] uppercase px-2">
           {title}
         </h1>
         
         {subtitle && (
-          <p className="mt-6 text-sm sm:text-lg md:text-xl lg:text-2xl font-light tracking-[0.4em] sm:tracking-[0.6em] md:tracking-[0.8em] text-zinc-300 uppercase drop-shadow-lg leading-relaxed max-w-3xl">
+          <p className="mt-6 text-xs sm:text-lg md:text-xl lg:text-2xl font-light tracking-[0.2em] sm:tracking-[0.6em] md:tracking-[0.8em] text-zinc-300 uppercase drop-shadow-lg leading-relaxed max-w-3xl">
             {subtitle}
           </p>
         )}

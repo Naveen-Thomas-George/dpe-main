@@ -139,13 +139,13 @@ export default function HeroSection() {
       {/* Content wrapper */}
       <div
         ref={textRef}
-        className="relative z-10 flex flex-col items-center justify-center text-center px-4 transform-gpu will-change-transform"
+        className="relative z-10 flex flex-col items-center justify-center text-center px-4 transform-gpu will-change-transform w-full"
       >
-        <h1 className="text-8xl md:text-[10rem] font-black leading-none tracking-tighter text-zinc-50 drop-shadow-[0_30px_50px_rgba(0,0,0,0.8)]">
+        <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black leading-none tracking-tighter text-zinc-50 drop-shadow-[0_30px_50px_rgba(0,0,0,0.8)] px-2">
           Department of Physical Education
         </h1>
-        <p className="mt-8 text-1xl md:text-2xl font-light tracking-[0.4em] md:tracking-[0.8em] text-zinc-300 uppercase drop-shadow-2xl flex items-center gap-6">
-          CHRIST (Deemed to be University) <span className="opacity-20 inline-block h-6 w-[2px] bg-zinc-50 transform rotate-12"></span> BYC
+        <p className="mt-6 sm:mt-8 text-[10px] sm:text-xs md:text-xl lg:text-2xl font-light tracking-[0.2em] sm:tracking-[0.4em] md:tracking-[0.8em] text-zinc-300 uppercase drop-shadow-2xl flex flex-col sm:flex-row items-center gap-2 sm:gap-6 justify-center">
+          CHRIST (Deemed to be University) <span className="opacity-20 hidden sm:inline-block h-4 w-[2px] bg-zinc-50 transform rotate-12"></span> BYC
         </p>
       </div>
 

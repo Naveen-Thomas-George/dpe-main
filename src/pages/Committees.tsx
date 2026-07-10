@@ -1,14 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Monitor, 
-  Calendar, 
-  Banknote, 
-  Megaphone, 
-  Truck, 
-  Trophy, 
-  Coffee, 
-  Shield, 
+import {
+  Monitor,
+  Megaphone,
+  Truck,
+  Coffee,
   X,
   ChevronRight,
   Users,
@@ -121,9 +117,12 @@ const STATS = [
   { label: 'Students Engaged', value: 1000, suffix: '+' }
 ];
 
+interface CounterProps {
+  value: number;
+  suffix: string;
+}
 
-
-const Counter = ({ value, suffix }) => {
+const Counter = ({ value, suffix }: CounterProps) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -174,7 +173,7 @@ export default function Committees() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -187,18 +186,18 @@ export default function Committees() {
       </div>
 
       {/* Main Content Container */}
-      <div className="relative z-10 w-full flex flex-col items-center pt-32 pb-24 px-4 md:px-8">
-        
+      <div className="relative z-10 w-full flex flex-col items-center pt-40 pb-24 px-4 md:px-8">
+
         {/* 1. Hero Section */}
         <div className="flex flex-col items-center justify-center text-center w-full max-w-5xl mb-16">
-          <TextGenerateEffect 
-            duration={2} 
-            filter={true} 
-            words="Department of Physical Education" 
+          <TextGenerateEffect
+            duration={2}
+            filter={true}
+            words="Department of Physical Education"
             className="text-xs md:text-sm font-light tracking-[0.5em] text-zinc-400 uppercase drop-shadow-2xl mb-6"
           />
 
-          <motion.h1 
+          <motion.h1
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -210,11 +209,11 @@ export default function Committees() {
                 className="text-6xl md:text-8xl font-black"
                 backgroundClassName="bg-zinc-950"
                 colors={[
-                   "#0ea5e9",
-                   "#3b82f6",
-                   "#8b5cf6",
-                   "#14b8a6",
-                 ]}
+                  "#0ea5e9",
+                  "#3b82f6",
+                  "#8b5cf6",
+                  "#14b8a6",
+                ]}
                 lineGap={4}
                 lineWidth={2}
                 animationDuration={8}
@@ -222,7 +221,7 @@ export default function Committees() {
               />
             </span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -233,7 +232,7 @@ export default function Committees() {
         </div>
 
         {/* Statistics Section (Moved Above Filters as requested) */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -243,7 +242,7 @@ export default function Committees() {
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-900/20 to-zinc-950 pointer-events-none" />
           <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 divide-x-0 md:divide-x divide-zinc-800/50">
             {STATS.map((stat, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -261,7 +260,7 @@ export default function Committees() {
         </motion.div>
 
         {/* Search & Filters */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -303,10 +302,10 @@ export default function Committees() {
               >
                 {/* Glow border on hover */}
                 <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-[inset_0_0_20px_rgba(255,255,255,0.05),0_0_20px_rgba(255,255,255,0.05)] pointer-events-none" />
-                
+
                 {/* Background gradient transition */}
                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/0 via-zinc-800/0 to-zinc-800/0 group-hover:from-zinc-700/20 group-hover:via-zinc-800/5 group-hover:to-zinc-900/20 transition-colors duration-500 pointer-events-none" />
-                
+
                 {/* Shimmer light sweep */}
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
 
@@ -315,27 +314,27 @@ export default function Committees() {
                     <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 flex items-center justify-center border border-zinc-700/50 group-hover:border-zinc-400/50 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all">
                       <committee.icon className="w-6 h-6 text-zinc-300 group-hover:text-white group-hover:scale-105 transition-transform duration-300" />
                     </div>
-                    
+
                     {/* Status Badge */}
                     <div className="flex items-center gap-2 bg-zinc-950/60 border border-zinc-800/80 px-2.5 py-1 rounded-full backdrop-blur-sm">
                       <span className={`w-2 h-2 rounded-full ${getStatusColor(committee.registrationStatus)}`} />
                       <span className="text-[10px] font-semibold text-zinc-300 uppercase tracking-wider">{getStatusText(committee.registrationStatus)}</span>
                     </div>
                   </div>
-                  
+
                   <h3 className="text-xl font-bold text-zinc-100 mb-1 group-hover:text-white transition-colors">{committee.name}</h3>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{committee.subtitle}</p>
                   <p className="text-sm text-zinc-400 mb-4 flex-grow leading-relaxed line-clamp-3">{committee.shortDesc}</p>
-                  
+
                   {/* Tags */}
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {committee.tags.slice(0,3).map(tag => (
+                    {committee.tags.slice(0, 3).map(tag => (
                       <span key={tag} className="text-[10px] font-medium text-zinc-400 bg-zinc-800/30 border border-zinc-700/50 px-2 py-1 rounded-md">
                         {tag}
                       </span>
                     ))}
                   </div>
-                  
+
                   <div className="flex items-center text-sm font-medium text-zinc-500 group-hover:text-white transition-colors mt-auto pt-4 border-t border-zinc-800/50 group-hover:border-zinc-600/50">
                     View Details <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1.5 group-hover:text-white transition-transform duration-300" />
                   </div>
@@ -344,8 +343,8 @@ export default function Committees() {
             ))}
           </AnimatePresence>
           {filteredCommittees.length === 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="col-span-full py-12 text-center text-zinc-500"
             >
               No committees found matching your criteria.
@@ -365,7 +364,7 @@ export default function Committees() {
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
           >
             <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md" onClick={() => setSelectedId(null)} />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -373,7 +372,7 @@ export default function Committees() {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl p-6 md:p-10 custom-scrollbar"
             >
-              <button 
+              <button
                 onClick={() => setSelectedId(null)}
                 className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400"
               >

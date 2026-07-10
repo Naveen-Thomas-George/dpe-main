@@ -42,7 +42,7 @@ export default function Gallery() {
   }));
 
   return (
-    <div className="relative min-h-screen pt-32 pb-24 bg-zinc-950">
+    <div className="relative min-h-screen pt-40 pb-24 bg-zinc-950">
       <PrismBackground glow={0.2} noise={0.4} hueShift={0.5} />
       
       {/* Dark overlay for readability */}

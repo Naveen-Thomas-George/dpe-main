@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useGsapAnimation, gsap } from '../animations';
-import { Shield, Users, User, CheckCircle2, ChevronDown, Award, BookOpen, Trophy } from 'lucide-react';
+import { Shield, Users, User, CheckCircle2, ChevronDown, Award, BookOpen, Trophy, Flag, Crown, MapPin, Swords, Target, Activity } from 'lucide-react';
 
 // ACADEMIC DATA MAPPING
 const SCHOOLS_DATA = {
@@ -34,32 +35,42 @@ const SCHOOLS_DATA = {
 
 type SchoolType = keyof typeof SCHOOLS_DATA;
 
-// EVENT & SPORT CONSTANTS
-const INDIVIDUAL_EVENTS = [
-  { id: 'chess', name: 'Chess', desc: 'Battle of minds on the 64 squares.' },
-  { id: 'carrom', name: 'Carrom', desc: 'Precision strikes & pocketing coins.' },
-  { id: 'table-tennis', name: 'Table Tennis', desc: 'Fast-paced table rallies.' },
-  { id: 'athletics', name: 'Athletics', desc: 'Track & field sprints.' },
-  { id: 'badminton', name: 'Badminton Singles', desc: 'Singles court dominance.' },
-  { id: 'esports', name: 'E-Sports', desc: 'Digital arena battlegrounds.' },
+// EVENT CATEGORY 1: Three Phase Progression
+const PHASE_PROGRESSION_EVENTS = [
+  { id: '8-ball-pool', name: '8 Ball Pool Singles', type: 'individual', desc: 'Precision pool singles.' },
+  { id: 'beach-volleyball', name: 'Beach Volleyball', type: 'team', size: 2, desc: '2v2 sand court battles.' },
+  { id: 'carrom', name: 'Carrom', type: 'individual', desc: 'Precision strikes & pocketing.' },
+  { id: 'chess', name: 'Chess', type: 'individual', desc: 'Battle of minds on 64 squares.' },
+  { id: 'foosball', name: 'Foosball', type: 'team', size: 2, desc: 'Fast-paced table football.' },
+  { id: 'footvolley', name: 'Footvolley', type: 'team', size: 2, desc: 'Volleyball rules, football touches.' },
+  { id: 'tug-of-war', name: 'Tug of War', type: 'team', size: 8, desc: 'Ultimate test of strength.' },
 ];
 
-const TEAM_SPORTS = [
-  { id: 'football', name: 'Football', size: 11, desc: '11 players on the turf.' },
-  { id: 'basketball', name: 'Basketball', size: 12, desc: 'High flying hoop battles.' },
-  { id: 'volleyball', name: 'Volleyball', size: 10, desc: 'Spike, set, and block.' },
-  { id: 'cricket', name: 'Cricket', size: 15, desc: '15-man squad operations.' },
-  { id: 'throwball', name: 'Throwball', size: 12, desc: 'Court catches and throws.' },
-  { id: 'kabaddi', name: 'Kabaddi', size: 12, desc: 'Raids, tackles, and tags.' },
+// EVENT CATEGORY 2: Knockout Cum League
+const KNOCKOUT_LEAGUE_EVENTS = [
+  { id: 'badminton', name: 'Badminton Singles', type: 'individual', desc: 'Singles court dominance.' },
+  { id: 'table-tennis', name: 'Table Tennis Singles', type: 'individual', desc: 'Fast-paced table rallies.' },
+  { id: 'basketball', name: 'Basketball', type: 'team', size: 12, desc: 'High flying hoop battles.' },
+  { id: 'cricket', name: 'Cricket', type: 'team', size: 15, desc: 'Knockout 15-man squad operations.' },
+  { id: 'football', name: 'Football', type: 'team', size: 11, desc: '11 players on the turf.' },
+  { id: 'kabaddi', name: 'Kabaddi', type: 'team', size: 12, desc: 'Raids, tackles, and tags.' },
+  { id: 'volleyball', name: 'Volleyball', type: 'team', size: 10, desc: 'Spike, set, and block.' },
+  { id: 'throwball', name: 'Throwball', type: 'team', size: 12, desc: 'Court catches and throws.' },
+  { id: 'yoga', name: 'Yoga', type: 'individual', desc: 'Knockout flexibility & balance.' },
 ];
+
+const ALL_EVENTS = [...PHASE_PROGRESSION_EVENTS, ...KNOCKOUT_LEAGUE_EVENTS];
 
 export default function PedagogicLeague() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rulesRef = useRef<HTMLDivElement>(null);
   const registrationRef = useRef<HTMLDivElement>(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // CATEGORY & EVENT SELECTION STATES
-  const [selectedCategory, setSelectedCategory] = useState<'individual' | 'team' | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<'phase' | 'knockout' | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   
   // DYNAMIC FORMS SUBMITTED STATES
@@ -68,6 +79,9 @@ export default function PedagogicLeague() {
 
   // RULES EXPAND STATES
   const [expandedRule, setExpandedRule] = useState<number | null>(null);
+
+  // UNDERTAKING STATE
+  const [undertakingAccepted, setUndertakingAccepted] = useState(false);
 
   // 1. INDIVIDUAL FORM STATES
   const [indName, setIndName] = useState('');
@@ -78,13 +92,12 @@ export default function PedagogicLeague() {
   const [indDept, setIndDept] = useState('');
   const [indClass, setIndClass] = useState('');
   const [indSection, setIndSection] = useState('');
-  const [indConfirm1, setIndConfirm1] = useState(false);
-  const [indConfirm2, setIndConfirm2] = useState(false);
   
   // Validation error states
   const [indErrors, setIndErrors] = useState<Record<string, string>>({});
 
-  // 2. TEAM CAPTAIN FORM STATES
+  // 2. TEAM FORM STATES
+  const [teamName, setTeamName] = useState('');
   const [capName, setCapName] = useState('');
   const [capReg, setCapReg] = useState('');
   const [capEmail, setCapEmail] = useState('');
@@ -101,8 +114,6 @@ export default function PedagogicLeague() {
     email: string;
   }
   const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [teamConfirm1, setTeamConfirm1] = useState(false);
-  const [teamConfirm2, setTeamConfirm2] = useState(false);
   const [teamErrors, setTeamErrors] = useState<Record<string, string>>({});
 
   // Scroll Helpers
@@ -112,19 +123,35 @@ export default function PedagogicLeague() {
     }
   };
 
+  // Scroll to section based on route path
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (location.pathname.endsWith('/registration')) {
+        scrollTo(registrationRef);
+      } else if (location.pathname.endsWith('/rules')) {
+        scrollTo(rulesRef);
+      } else if (location.pathname === '/pedagogic-league') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 150); // slight delay to allow rendering and page transition to complete
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
   // Dynamic players generator
   useEffect(() => {
-    if (selectedCategory === 'team' && selectedEventId) {
-      const sport = TEAM_SPORTS.find(s => s.id === selectedEventId);
-      if (sport) {
+    if (selectedEventId) {
+      const event = ALL_EVENTS.find(e => e.id === selectedEventId);
+      if (event && event.type === 'team' && 'size' in event) {
         // Pre-create array slots minus captain (Captain details are separate)
-        const sizeMinusCaptain = sport.size - 1;
+        const sizeMinusCaptain = (event.size as number) - 1;
         setPlayers(
           Array.from({ length: sizeMinusCaptain }, () => ({ name: '', reg: '', email: '' }))
         );
+      } else {
+        setPlayers([]);
       }
     }
-  }, [selectedEventId, selectedCategory]);
+  }, [selectedEventId]);
 
   // RESET FORM ERRORS ON EVENT CHANGE
   useEffect(() => {
@@ -183,19 +210,19 @@ export default function PedagogicLeague() {
     if (!selectedEventId) errors.event = 'Please pick an event category first.';
     if (!indName.trim()) errors.name = 'Full Name is required.';
     if (!validateRegisterNo(indReg)) errors.reg = 'Register number must be exactly 7 digits.';
-    if (!validateChristEmail(indEmail)) errors.email = 'Must be a valid CHRIST email domain (@christuniversity.in / @res.christuniversity.in).';
+    if (!validateChristEmail(indEmail)) errors.email = 'Must be a valid CHRIST email domain (@christuniversity.in).';
     if (!validatePhone(indPhone)) errors.phone = 'Enter a valid 10-digit Indian phone number.';
     if (!indSchool) errors.school = 'Select your School.';
     if (!indDept) errors.dept = 'Select your Department.';
     if (!indClass.trim()) errors.class = 'Class details required.';
     if (!indSection.trim()) errors.section = 'Section required.';
-    if (!indConfirm1 || !indConfirm2) errors.confirm = 'Confirm all checkboxes to submit.';
+    if (!undertakingAccepted) errors.undertaking = 'You must accept the undertaking to register.';
 
     if (Object.keys(errors).length > 0) {
       setIndErrors(errors);
       // Find first error field and scroll
       const firstErr = Object.keys(errors)[0];
-      const el = document.getElementById(`ind-${firstErr}`);
+      const el = document.getElementById(`ind-${firstErr}`) || document.getElementById('undertaking-section');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -210,6 +237,7 @@ export default function PedagogicLeague() {
     const errors: Record<string, string> = {};
 
     if (!selectedEventId) errors.event = 'Please pick a team sport first.';
+    if (!teamName.trim()) errors.teamName = 'Team Name is required.';
     if (!capName.trim()) errors.capName = 'Captain Full Name is required.';
     if (!validateRegisterNo(capReg)) errors.capReg = 'Register number must be exactly 7 digits.';
     if (!validateChristEmail(capEmail)) errors.capEmail = 'Must be a valid CHRIST email domain.';
@@ -233,13 +261,13 @@ export default function PedagogicLeague() {
       }
     });
 
-    if (!teamConfirm1 || !teamConfirm2) errors.confirm = 'Confirm all checkboxes to submit.';
+    if (!undertakingAccepted) errors.undertaking = 'You must accept the undertaking to register.';
 
     if (Object.keys(errors).length > 0) {
       setTeamErrors(errors);
       // Find first error and scroll to it
       const firstErrKey = Object.keys(errors)[0];
-      const el = document.getElementById(firstErrKey);
+      const el = document.getElementById(firstErrKey) || document.getElementById('undertaking-section');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -255,8 +283,8 @@ export default function PedagogicLeague() {
     setPlayers(updated);
   };
 
-  // Active sport details
-  const activeSport = TEAM_SPORTS.find(s => s.id === selectedEventId);
+  // Active event details
+  const activeEvent = ALL_EVENTS.find(e => e.id === selectedEventId);
 
   // Compute registered players count
   const filledPlayersCount = players.filter(p => p.name.trim() && p.reg.trim() && p.email.trim()).length + 1; // plus captain
@@ -293,11 +321,11 @@ export default function PedagogicLeague() {
           </h1>
 
           <p className="reveal-element mt-6 text-xl sm:text-2xl md:text-3xl font-light tracking-[0.5em] text-zinc-300 uppercase">
-            Compete. Collaborate. Conquer.
+            Compete. Represent. Rise Through The Ranks.
           </p>
 
           <p className="reveal-element mt-8 text-sm sm:text-base md:text-lg text-zinc-400 max-w-3xl leading-relaxed font-light tracking-wide">
-            An elite sporting arena for department clusters. Represent your academic home, match up against competitor divisions, and push for the ultimate department trophy. Built for players, strategists, and champions.
+            An elite sporting arena for academic clusters. Students progress from Class level to Department level, and finally to School level competition to battle for the ultimate Pedagogic League Championship.
           </p>
 
           {/* CTAs */}
@@ -324,6 +352,60 @@ export default function PedagogicLeague() {
         </div>
       </section>
 
+      {/* ================= SECTION 1.5: COMPETITION JOURNEY ================= */}
+      <section className="relative py-20 px-6 z-10">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase text-blue-500 mb-4">
+              TOURNAMENT STRUCTURE
+            </h2>
+            <h3 className="text-3xl md:text-5xl font-black tracking-tighter uppercase text-zinc-100">
+              Competition Journey
+            </h3>
+          </div>
+
+          <div className="relative border-l border-zinc-800/80 ml-4 md:ml-0 md:border-l-0">
+            {/* Desktop Center Line */}
+            <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800/80 -translate-x-1/2" />
+            
+            {[
+              { step: 'Stage 1', title: 'Inter-Class Competition', desc: 'Students compete within their respective classes to secure dominance.', icon: <Users className="w-5 h-5 text-blue-400" /> },
+              { step: 'Stage 2', title: 'Inter-Department Competition', desc: 'Class winners step up to represent their departments in higher-tier matchups.', icon: <Flag className="w-5 h-5 text-blue-400" /> },
+              { step: 'Stage 3', title: 'Inter-School League Stage', desc: 'Department winners advance to represent their schools on the biggest stage.', icon: <Activity className="w-5 h-5 text-blue-400" /> },
+              { step: 'Stage 4', title: 'Pedagogic League Champions', desc: 'The School with the best overall league performance is crowned the Pedagogic League Champion.', icon: <Crown className="w-5 h-5 text-amber-400" /> },
+            ].map((stage, idx) => (
+              <div key={idx} className={`relative flex flex-col md:flex-row items-center justify-between mb-12 md:mb-24 ${idx % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                <div className="w-full md:w-5/12 pl-8 md:pl-0" />
+                
+                {/* Center Node */}
+                <div className="absolute left-[-16px] md:left-1/2 md:-translate-x-1/2 w-8 h-8 rounded-full bg-zinc-950 border-2 border-blue-500/50 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)] z-10">
+                  <div className="w-2 h-2 rounded-full bg-blue-400" />
+                </div>
+
+                <div className="w-full md:w-5/12 pl-8 md:pl-0 mt-2 md:mt-0">
+                  <div className={`bg-zinc-900/30 border border-zinc-800/80 backdrop-blur-md p-6 rounded-2xl hover:border-blue-500/30 transition-all ${idx % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
+                    <div className={`flex items-center gap-3 mb-3 ${idx % 2 === 0 ? 'md:justify-end' : 'md:justify-start'}`}>
+                      <div className="p-2 rounded-lg bg-blue-500/10">
+                        {stage.icon}
+                      </div>
+                      <span className="text-[10px] font-bold tracking-[0.2em] text-blue-500 uppercase">
+                        {stage.step}
+                      </span>
+                    </div>
+                    <h4 className="text-xl font-bold uppercase tracking-wide text-zinc-100 mb-2">
+                      {stage.title}
+                    </h4>
+                    <p className="text-xs md:text-sm text-zinc-400 font-light leading-relaxed">
+                      {stage.desc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ================= SECTION 2: RULES AND REGULATIONS ================= */}
       <section ref={rulesRef} className="relative py-28 px-6 z-10 border-t border-zinc-900/60 bg-zinc-950/40 backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
@@ -344,29 +426,24 @@ export default function PedagogicLeague() {
           <div className="flex flex-col gap-4">
             {[
               {
-                title: 'General Rules',
-                icon: <Award className="w-5 h-5 text-blue-500" />,
-                content: 'All matches will follow international standards modified for departmental cluster guidelines. Strict adherence to schedule timers is required; teams late by more than 10 minutes will automatically forfeit the game. The referees decision remains absolute and final on-court.'
-              },
-              {
-                title: 'Eligibility Criteria',
+                title: 'ID Verification',
                 icon: <Shield className="w-5 h-5 text-blue-500" />,
-                content: 'Participation is open exclusively to active students enrolled in departments under the Christ University Yeshwanthpur campus. Players must display their official University ID cards prior to match entry. Inter-campus transfers must clear athletic boards first.'
+                content: 'Valid University ID Card is mandatory for all participating players. No proxy players are permitted.'
               },
               {
-                title: 'Individual Events Rules',
-                icon: <User className="w-5 h-5 text-blue-500" />,
-                content: 'Single players are capped to registration in a maximum of two individual matches (e.g. Chess and Table Tennis). Registrant details must match register cards. No proxy players are permitted under any condition.'
+                title: 'Schedules & Fixtures',
+                icon: <Activity className="w-5 h-5 text-blue-500" />,
+                content: 'Fixtures and schedules published by DPE are final. DPE is not responsible for schedule clashes caused by registering for multiple events.'
               },
               {
-                title: 'Team Sports Rules',
-                icon: <Users className="w-5 h-5 text-blue-500" />,
-                content: 'Each team registration must designate an active Team Captain. Roster limits must follow strict size standards (e.g. Football 11+substitutions limit, Cricket 15). Captain details are registered separately and act as the principal point of communication.'
+                title: 'Disciplinary Action',
+                icon: <Target className="w-5 h-5 text-blue-500" />,
+                content: 'Misconduct or unsporting behaviour may result in immediate disqualification of the player or entire team.'
               },
               {
-                title: 'Code of Conduct',
-                icon: <BookOpen className="w-5 h-5 text-blue-500" />,
-                content: 'Zero tolerance for unsportsmanlike behavior, vulgar expressions, or physical altercations. Disciplinary infractions will result in immediate disqualification of the entire team and referral to the University Disciplinary Council.'
+                title: 'Organizing Committee',
+                icon: <Swords className="w-5 h-5 text-blue-500" />,
+                content: 'Decisions of DPE are absolute, final and binding. Competition formats may change depending on the number of registrations.'
               }
             ].map((rule, idx) => (
               <div 
@@ -418,60 +495,62 @@ export default function PedagogicLeague() {
               Choose Event Format
             </h3>
             <p className="mt-4 text-xs md:text-sm text-zinc-500 max-w-xl mx-auto font-light">
-              Toggle event category formats below to configure registration inputs.
+              Select the competition category below to view and register for events.
             </p>
           </div>
 
           {/* TWO CATEGORY CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             
-            {/* Card 1: Individual */}
+            {/* Card 1: Three Phase Progression */}
             <button
               onClick={() => {
-                setSelectedCategory('individual');
+                setSelectedCategory('phase');
                 setSelectedEventId('');
+                setUndertakingAccepted(false);
               }}
               className={`flex flex-col items-center justify-center p-10 bg-zinc-900/30 border text-center transition-all duration-300 rounded-3xl cursor-pointer ${
-                selectedCategory === 'individual'
+                selectedCategory === 'phase'
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_35px_rgba(59,130,246,0.15)] scale-[1.02]'
                   : 'border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/50'
               }`}
             >
               <div className={`p-4 rounded-full mb-6 transition-colors ${
-                selectedCategory === 'individual' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-400'
+                selectedCategory === 'phase' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-400'
               }`}>
-                <User className="w-8 h-8" />
+                <Activity className="w-8 h-8" />
               </div>
               <h4 className="text-xl font-bold uppercase tracking-wider text-zinc-100">
-                Individual Events
+                Category 1: Three Phase Progression
               </h4>
               <p className="mt-3 text-xs text-zinc-500 max-w-[280px] font-light leading-relaxed">
-                Singles categories, chess matrices, athletics, and custom e-sports formats.
+                Events with Class, Department, and School progression levels.
               </p>
             </button>
 
-            {/* Card 2: Team Sports */}
+            {/* Card 2: Knockout Cum League */}
             <button
               onClick={() => {
-                setSelectedCategory('team');
+                setSelectedCategory('knockout');
                 setSelectedEventId('');
+                setUndertakingAccepted(false);
               }}
               className={`flex flex-col items-center justify-center p-10 bg-zinc-900/30 border text-center transition-all duration-300 rounded-3xl cursor-pointer ${
-                selectedCategory === 'team'
+                selectedCategory === 'knockout'
                   ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_35px_rgba(59,130,246,0.15)] scale-[1.02]'
                   : 'border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/50'
               }`}
             >
               <div className={`p-4 rounded-full mb-6 transition-colors ${
-                selectedCategory === 'team' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-400'
+                selectedCategory === 'knockout' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-400'
               }`}>
-                <Users className="w-8 h-8" />
+                <Trophy className="w-8 h-8" />
               </div>
               <h4 className="text-xl font-bold uppercase tracking-wider text-zinc-100">
-                Team Sports
+                Category 2: Knockout Cum League
               </h4>
               <p className="mt-3 text-xs text-zinc-500 max-w-[280px] font-light leading-relaxed">
-                Football turf, basketball hoops, volleyball sets, and department cricket operations.
+                High stakes team and individual elimination structures.
               </p>
             </button>
 
@@ -481,176 +560,454 @@ export default function PedagogicLeague() {
           {selectedCategory && (
             <div className="mt-20 pt-16 border-t border-zinc-900/60 max-w-4xl mx-auto">
               
-              {/* ================= FORMS BLOCK: INDIVIDUAL ================= */}
-              {selectedCategory === 'individual' && (
-                <div>
-                  <div className="text-center mb-12">
-                    <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-zinc-50">
-                      Individual Event Registration
-                    </h3>
-                    <p className="mt-2 text-xs text-zinc-500 font-light">
-                      Select your target activity below and fill out the details block.
-                    </p>
-                  </div>
+              <div className="text-center mb-12">
+                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-zinc-50">
+                  Select Event
+                </h3>
+                <p className="mt-2 text-xs text-zinc-500 font-light">
+                  Choose your target sport to open the registration form.
+                </p>
+              </div>
 
-                  {/* Dynamic picker grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
-                    {INDIVIDUAL_EVENTS.map((event) => (
-                      <button
-                        key={event.id}
-                        type="button"
-                        onClick={() => setSelectedEventId(event.id)}
-                        className={`p-5 text-left border rounded-2xl transition-all cursor-pointer ${
-                          selectedEventId === event.id
-                            ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                            : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
-                        }`}
-                      >
-                        <h5 className="font-bold text-xs uppercase tracking-wider text-zinc-200">
-                          {event.name}
-                        </h5>
-                        <p className="mt-1 text-[10px] text-zinc-500 font-light leading-snug">
-                          {event.desc}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Form validation alert */}
-                  {indErrors.event && (
-                    <div className="p-4 mb-8 bg-red-950/20 border border-red-900/50 rounded-xl text-xs text-red-400 font-medium">
-                      {indErrors.event}
+              {/* Dynamic picker grid based on selected category */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
+                {(selectedCategory === 'phase' ? PHASE_PROGRESSION_EVENTS : KNOCKOUT_LEAGUE_EVENTS).map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedEventId(event.id);
+                      setUndertakingAccepted(false);
+                    }}
+                    className={`p-5 text-left border rounded-2xl transition-all cursor-pointer relative ${
+                      selectedEventId === event.id
+                        ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                        : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="absolute top-3 right-3 opacity-30">
+                      {event.type === 'team' ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
                     </div>
-                  )}
+                    <h5 className="font-bold text-xs uppercase tracking-wider text-zinc-200 pr-4">
+                      {event.name}
+                    </h5>
+                    {event.type === 'team' && 'size' in event ? (
+                      <p className="mt-1 text-[9px] text-blue-400 font-mono tracking-wider">
+                        {event.size} PLAYERS
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[9px] text-zinc-500 font-mono tracking-wider">
+                        INDIVIDUAL
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
 
-                  {/* RENDER FORM IF EVENT IS SELECTED */}
-                  {selectedEventId && (
-                    <div>
-                      {isIndividualSuccess ? (
-                        <div className="p-10 bg-zinc-900/40 border border-zinc-800 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center text-center shadow-xl">
-                          <CheckCircle2 className="w-16 h-16 text-blue-500 mb-6 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-bounce" />
-                          <h4 className="text-2xl font-black uppercase text-zinc-100">
-                            Registration Success
-                          </h4>
-                          <p className="mt-3 text-xs text-zinc-400 max-w-sm leading-relaxed font-light">
-                            Congratulations! Your individual registration sheet has been saved. Match schedules will arrive on your registered CHRIST email soon.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsIndividualSuccess(false);
-                              setSelectedEventId('');
-                              setIndName('');
-                              setIndReg('');
-                              setIndEmail('');
-                              setIndPhone('');
-                              setIndSchool('');
-                              setIndDept('');
-                              setIndClass('');
-                              setIndSection('');
-                              setIndConfirm1(false);
-                              setIndConfirm2(false);
-                            }}
-                            className="mt-8 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-[10px] tracking-[0.2em] font-bold uppercase rounded-lg transition-all cursor-pointer"
-                          >
-                            Register Another Event
-                          </button>
+              {/* Form validation alert */}
+              {(indErrors.event || teamErrors.event) && (
+                <div className="p-4 mb-8 bg-red-950/20 border border-red-900/50 rounded-xl text-xs text-red-400 font-medium">
+                  {indErrors.event || teamErrors.event}
+                </div>
+              )}
+
+              {/* ================= FORMS BLOCK: INDIVIDUAL ================= */}
+              {activeEvent && activeEvent.type === 'individual' && (
+                <div>
+                  {isIndividualSuccess ? (
+                    <div className="p-10 bg-zinc-900/40 border border-zinc-800 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center text-center shadow-xl">
+                      <CheckCircle2 className="w-16 h-16 text-blue-500 mb-6 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-bounce" />
+                      <h4 className="text-2xl font-black uppercase text-zinc-100">
+                        Registration Success
+                      </h4>
+                      <p className="mt-3 text-xs text-zinc-400 max-w-sm leading-relaxed font-light">
+                        Congratulations! Your individual registration sheet has been saved. Match schedules will arrive on your registered CHRIST email soon.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsIndividualSuccess(false);
+                          setSelectedEventId('');
+                          setIndName('');
+                          setIndReg('');
+                          setIndEmail('');
+                          setIndPhone('');
+                          setIndSchool('');
+                          setIndDept('');
+                          setIndClass('');
+                          setIndSection('');
+                          setUndertakingAccepted(false);
+                        }}
+                        className="mt-8 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-[10px] tracking-[0.2em] font-bold uppercase rounded-lg transition-all cursor-pointer"
+                      >
+                        Register Another Event
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleIndividualSubmit} className="space-y-6 bg-zinc-900/20 border border-zinc-800/80 p-8 md:p-10 rounded-3xl backdrop-blur-md">
+                      
+                      {/* Selected display text field */}
+                      <div className="p-4 bg-zinc-900/50 border border-zinc-800/80 rounded-xl">
+                        <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
+                          Active Event Format
+                        </span>
+                        <span className="text-sm font-bold uppercase tracking-wider text-blue-400 mt-1 block">
+                          {activeEvent.name}
+                        </span>
+                      </div>
+
+                      {/* Personal details grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div id="ind-name" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Full Name
+                          </label>
+                          <input
+                            type="text"
+                            value={indName}
+                            onChange={(e) => setIndName(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="Enter your full name"
+                          />
+                          {indErrors.name && <span className="text-[9px] text-red-500">{indErrors.name}</span>}
                         </div>
-                      ) : (
-                        <form onSubmit={handleIndividualSubmit} className="space-y-6 bg-zinc-900/20 border border-zinc-800/80 p-8 md:p-10 rounded-3xl backdrop-blur-md">
-                          
-                          {/* Selected display text field */}
-                          <div className="p-4 bg-zinc-900/50 border border-zinc-800/80 rounded-xl">
-                            <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
-                              Active Event Format
+
+                        <div id="ind-reg" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Register Number (7 Digits)
+                          </label>
+                          <input
+                            type="text"
+                            value={indReg}
+                            onChange={(e) => setIndReg(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.reg ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="e.g. 2410123"
+                            maxLength={7}
+                          />
+                          {indErrors.reg && <span className="text-[9px] text-red-500">{indErrors.reg}</span>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div id="ind-email" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            CHRIST Email Address
+                          </label>
+                          <input
+                            type="email"
+                            value={indEmail}
+                            onChange={(e) => setIndEmail(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="name@christuniversity.in"
+                          />
+                          {indErrors.email && <span className="text-[9px] text-red-500">{indErrors.email}</span>}
+                        </div>
+
+                        <div id="ind-phone" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Phone Number (10 Digits)
+                          </label>
+                          <input
+                            type="text"
+                            value={indPhone}
+                            onChange={(e) => setIndPhone(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.phone ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="e.g. 9876543210"
+                            maxLength={10}
+                          />
+                          {indErrors.phone && <span className="text-[9px] text-red-500">{indErrors.phone}</span>}
+                        </div>
+                      </div>
+
+                      {/* Academic details grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div id="ind-school" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            School
+                          </label>
+                          <select
+                            value={indSchool}
+                            onChange={(e) => {
+                              setIndSchool(e.target.value as SchoolType);
+                              setIndDept(''); // reset dept
+                            }}
+                            className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="">Select School</option>
+                            {Object.keys(SCHOOLS_DATA).map((school) => (
+                              <option key={school} value={school}>
+                                {school}
+                              </option>
+                            ))}
+                          </select>
+                          {indErrors.school && <span className="text-[9px] text-red-500">{indErrors.school}</span>}
+                        </div>
+
+                        <div id="ind-dept" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Department
+                          </label>
+                          <select
+                            value={indDept}
+                            onChange={(e) => setIndDept(e.target.value)}
+                            disabled={!indSchool}
+                            className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <option value="">Select Department</option>
+                            {indSchool &&
+                              SCHOOLS_DATA[indSchool].map((dept) => (
+                                <option key={dept} value={dept}>
+                                  {dept}
+                                </option>
+                              ))}
+                          </select>
+                          {indErrors.dept && <span className="text-[9px] text-red-500">{indErrors.dept}</span>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div id="ind-class" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Class
+                          </label>
+                          <input
+                            type="text"
+                            value={indClass}
+                            onChange={(e) => setIndClass(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.class ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="e.g. 3 BSC CS"
+                          />
+                          {indErrors.class && <span className="text-[9px] text-red-500">{indErrors.class}</span>}
+                        </div>
+
+                        <div id="ind-section" className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Section
+                          </label>
+                          <input
+                            type="text"
+                            value={indSection}
+                            onChange={(e) => setIndSection(e.target.value)}
+                            className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                              indErrors.section ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                            }`}
+                            placeholder="e.g. A"
+                          />
+                          {indErrors.section && <span className="text-[9px] text-red-500">{indErrors.section}</span>}
+                        </div>
+                      </div>
+
+                      {/* UNDERTAKING SECTION */}
+                      <div id="undertaking-section" className={`mt-8 p-6 rounded-2xl border ${indErrors.undertaking ? 'border-red-500/50 bg-red-500/5' : 'border-blue-500/20 bg-blue-500/5'} transition-all`}>
+                        <div className="flex items-start gap-4 cursor-pointer" onClick={() => setUndertakingAccepted(!undertakingAccepted)}>
+                          <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center shrink-0 ${undertakingAccepted ? 'bg-blue-600 border-blue-500' : 'bg-zinc-900 border-zinc-700'}`}>
+                            {undertakingAccepted && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-zinc-200 uppercase tracking-widest block mb-1">
+                              Participant Undertaking
                             </span>
-                            <span className="text-sm font-bold uppercase tracking-wider text-blue-400 mt-1 block">
-                              {INDIVIDUAL_EVENTS.find(e => e.id === selectedEventId)?.name}
+                            <span className="text-[10px] md:text-xs text-zinc-400 font-light leading-relaxed block">
+                              I confirm my participation in the tournament under my Class & Department. I will adhere to the rules, accept fixtures by DPE, and display proper sporting conduct. I understand that rule violations may lead to disqualification.
                             </span>
                           </div>
+                        </div>
+                        {indErrors.undertaking && <span className="text-[9px] text-red-500 block mt-3 ml-9">{indErrors.undertaking}</span>}
+                      </div>
 
-                          {/* Personal details grid */}
+                      {/* Submit */}
+                      <button
+                        type="submit"
+                        disabled={!undertakingAccepted}
+                        className={`w-full py-4 text-white text-xs tracking-[0.3em] font-bold uppercase rounded-xl transition-all mt-4 ${
+                          undertakingAccepted ? 'bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] cursor-pointer' : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Submit Registration
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* ================= FORMS BLOCK: TEAM SPORTS ================= */}
+              {activeEvent && activeEvent.type === 'team' && (
+                <div>
+                  {isTeamSuccess ? (
+                    <div className="p-10 bg-zinc-900/40 border border-zinc-800 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center text-center shadow-xl">
+                      <CheckCircle2 className="w-16 h-16 text-blue-500 mb-6 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-bounce" />
+                      <h4 className="text-2xl font-black uppercase text-zinc-100">
+                        Team Registered Successfully
+                      </h4>
+                      <p className="mt-3 text-xs text-zinc-400 max-w-sm leading-relaxed font-light">
+                        High five, Captain! The team roster sheets have been submitted. Final schedule dates and rules updates will be sent to your registered captain email address.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsTeamSuccess(false);
+                          setSelectedEventId('');
+                          setTeamName('');
+                          setCapName('');
+                          setCapReg('');
+                          setCapEmail('');
+                          setCapPhone('');
+                          setCapSchool('');
+                          setCapDept('');
+                          setCapClass('');
+                          setCapSection('');
+                          setPlayers([]);
+                          setUndertakingAccepted(false);
+                        }}
+                        className="mt-8 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-[10px] tracking-[0.2em] font-bold uppercase rounded-lg transition-all cursor-pointer"
+                      >
+                        Register Another Team
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleTeamSubmit} className="space-y-8">
+                      
+                      {/* Selected display text field */}
+                      <div className="p-4 bg-zinc-900/50 border border-zinc-800/80 rounded-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
+                            Selected Sport
+                          </span>
+                          <span className="text-base font-bold uppercase tracking-wider text-blue-400 mt-1 block">
+                            {activeEvent.name}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
+                            Roster size
+                          </span>
+                          <span className="text-base font-mono font-bold text-zinc-300 mt-1 block">
+                            {'size' in activeEvent ? activeEvent.size : ''} Players
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* ================= CAPTAIN PORTION ================= */}
+                      <div className="bg-blue-950/10 border border-blue-500/20 p-8 rounded-3xl backdrop-blur-md relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
+                        
+                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400 mb-6 flex items-center gap-2">
+                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px]">
+                            C
+                          </span>
+                          Team Captain Details
+                        </h4>
+
+                        <div className="space-y-6">
+                          
+                          {/* Team Name Input */}
+                          <div id="teamName" className="flex flex-col gap-2 pb-4 border-b border-blue-900/30">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-blue-300">
+                              Team Name
+                            </label>
+                            <input
+                              type="text"
+                              value={teamName}
+                              onChange={(e) => setTeamName(e.target.value)}
+                              className={`bg-zinc-950/80 border text-zinc-100 text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
+                                teamErrors.teamName ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                              }`}
+                              placeholder="Enter your custom Team Name"
+                            />
+                            {teamErrors.teamName && <span className="text-[9px] text-red-500">{teamErrors.teamName}</span>}
+                          </div>
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div id="ind-name" className="flex flex-col gap-2">
+                            <div id="capName" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Full Name
                               </label>
                               <input
                                 type="text"
-                                value={indName}
-                                onChange={(e) => setIndName(e.target.value)}
+                                value={capName}
+                                onChange={(e) => setCapName(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capName ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
-                                placeholder="Enter your full name"
+                                placeholder="Captain's full name"
                               />
-                              {indErrors.name && <span className="text-[9px] text-red-500">{indErrors.name}</span>}
+                              {teamErrors.capName && <span className="text-[9px] text-red-500">{teamErrors.capName}</span>}
                             </div>
 
-                            <div id="ind-reg" className="flex flex-col gap-2">
+                            <div id="capReg" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Register Number (7 Digits)
                               </label>
                               <input
                                 type="text"
-                                value={indReg}
-                                onChange={(e) => setIndReg(e.target.value)}
+                                value={capReg}
+                                onChange={(e) => setCapReg(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.reg ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capReg ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
                                 placeholder="e.g. 2410123"
                                 maxLength={7}
                               />
-                              {indErrors.reg && <span className="text-[9px] text-red-500">{indErrors.reg}</span>}
+                              {teamErrors.capReg && <span className="text-[9px] text-red-500">{teamErrors.capReg}</span>}
                             </div>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div id="ind-email" className="flex flex-col gap-2">
+                            <div id="capEmail" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 CHRIST Email Address
                               </label>
                               <input
                                 type="email"
-                                value={indEmail}
-                                onChange={(e) => setIndEmail(e.target.value)}
+                                value={capEmail}
+                                onChange={(e) => setCapEmail(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capEmail ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
-                                placeholder="name@christuniversity.in"
+                                placeholder="name.surname@christuniversity.in"
                               />
-                              {indErrors.email && <span className="text-[9px] text-red-500">{indErrors.email}</span>}
+                              {teamErrors.capEmail && <span className="text-[9px] text-red-500">{teamErrors.capEmail}</span>}
                             </div>
 
-                            <div id="ind-phone" className="flex flex-col gap-2">
+                            <div id="capPhone" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Phone Number (10 Digits)
                               </label>
                               <input
                                 type="text"
-                                value={indPhone}
-                                onChange={(e) => setIndPhone(e.target.value)}
+                                value={capPhone}
+                                onChange={(e) => setCapPhone(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.phone ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capPhone ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
                                 placeholder="e.g. 9876543210"
                                 maxLength={10}
                               />
-                              {indErrors.phone && <span className="text-[9px] text-red-500">{indErrors.phone}</span>}
+                              {teamErrors.capPhone && <span className="text-[9px] text-red-500">{teamErrors.capPhone}</span>}
                             </div>
                           </div>
 
-                          {/* Academic details grid */}
+                          {/* Academic details */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div id="ind-school" className="flex flex-col gap-2">
+                            <div id="capSchool" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 School
                               </label>
                               <select
-                                value={indSchool}
+                                value={capSchool}
                                 onChange={(e) => {
-                                  setIndSchool(e.target.value as SchoolType);
-                                  setIndDept(''); // reset dept
+                                  setCapSchool(e.target.value as SchoolType);
+                                  setCapDept(''); // reset dept
                                 }}
                                 className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
                               >
@@ -661,520 +1018,228 @@ export default function PedagogicLeague() {
                                   </option>
                                 ))}
                               </select>
-                              {indErrors.school && <span className="text-[9px] text-red-500">{indErrors.school}</span>}
+                              {teamErrors.capSchool && <span className="text-[9px] text-red-500">{teamErrors.capSchool}</span>}
                             </div>
 
-                            <div id="ind-dept" className="flex flex-col gap-2">
+                            <div id="capDept" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Department
                               </label>
                               <select
-                                value={indDept}
-                                onChange={(e) => setIndDept(e.target.value)}
-                                disabled={!indSchool}
+                                value={capDept}
+                                onChange={(e) => setCapDept(e.target.value)}
+                                disabled={!capSchool}
                                 className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 <option value="">Select Department</option>
-                                {indSchool &&
-                                  SCHOOLS_DATA[indSchool].map((dept) => (
+                                {capSchool &&
+                                  SCHOOLS_DATA[capSchool].map((dept) => (
                                     <option key={dept} value={dept}>
                                       {dept}
                                     </option>
                                   ))}
                               </select>
-                              {indErrors.dept && <span className="text-[9px] text-red-500">{indErrors.dept}</span>}
+                              {teamErrors.capDept && <span className="text-[9px] text-red-500">{teamErrors.capDept}</span>}
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
-                            <div id="ind-class" className="flex flex-col gap-2">
+                            <div id="capClass" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Class
                               </label>
                               <input
                                 type="text"
-                                value={indClass}
-                                onChange={(e) => setIndClass(e.target.value)}
+                                value={capClass}
+                                onChange={(e) => setCapClass(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.class ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capClass ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
                                 placeholder="e.g. 3 BSC CS"
                               />
-                              {indErrors.class && <span className="text-[9px] text-red-500">{indErrors.class}</span>}
+                              {teamErrors.capClass && <span className="text-[9px] text-red-500">{teamErrors.capClass}</span>}
                             </div>
 
-                            <div id="ind-section" className="flex flex-col gap-2">
+                            <div id="capSection" className="flex flex-col gap-2">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                 Section
                               </label>
                               <input
                                 type="text"
-                                value={indSection}
-                                onChange={(e) => setIndSection(e.target.value)}
+                                value={capSection}
+                                onChange={(e) => setCapSection(e.target.value)}
                                 className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                  indErrors.section ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                  teamErrors.capSection ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
                                 }`}
                                 placeholder="e.g. A"
                               />
-                              {indErrors.section && <span className="text-[9px] text-red-500">{indErrors.section}</span>}
+                              {teamErrors.capSection && <span className="text-[9px] text-red-500">{teamErrors.capSection}</span>}
                             </div>
                           </div>
 
-                          {/* Confirmations */}
-                          <div id="ind-confirm" className="space-y-3 pt-4 border-t border-zinc-900">
-                            <label className="flex items-start gap-3 text-zinc-400 text-xs cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={indConfirm1}
-                                onChange={(e) => setIndConfirm1(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span>I confirm that the information provided is accurate.</span>
-                            </label>
+                        </div>
+                      </div>
 
-                            <label className="flex items-start gap-3 text-zinc-400 text-xs cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={indConfirm2}
-                                onChange={(e) => setIndConfirm2(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span>I agree to abide by the rules and regulations of the Pedagogic League.</span>
-                            </label>
+                      {/* ================= GUIDELINES CARD ================= */}
+                      <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-4">
+                        <div className="mt-0.5 text-amber-500">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">
+                            University Player Guidelines
+                          </h4>
+                          <p className="text-[11px] md:text-xs text-zinc-400 font-light leading-relaxed">
+                            {activeEvent.id === 'football' 
+                              ? "A maximum of 4 active University players are permitted in the Football roster." 
+                              : "A maximum of 2 active University players are permitted per team for this sport."}
+                            {" "}Ensure you abide by this rule; violations may result in team disqualification.
+                          </p>
+                        </div>
+                      </div>
 
-                            {indErrors.confirm && (
-                              <span className="text-[9px] text-red-500 block">{indErrors.confirm}</span>
-                            )}
+                      {/* ================= DYNAMIC PLAYERS ROSTER ================= */}
+                      <div className="space-y-6">
+                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">
+                          Active Roster ({('size' in activeEvent ? activeEvent.size : 1) - 1} Additional Members)
+                        </h4>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          {players.map((player, idx) => {
+                            const playerNum = idx + 2;
+                            return (
+                              <div
+                                key={idx}
+                                className="p-6 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col gap-4"
+                              >
+                                <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
+                                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                    Player {playerNum} Details
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                  {/* Player Name */}
+                                  <div id={`player-${idx}-name`} className="flex flex-col gap-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
+                                      Full Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={player.name}
+                                      onChange={(e) => handlePlayerChange(idx, 'name', e.target.value)}
+                                      className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
+                                        teamErrors[`player-${idx}-name`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                      }`}
+                                      placeholder="Player name"
+                                    />
+                                    {teamErrors[`player-${idx}-name`] && (
+                                      <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-name`]}</span>
+                                    )}
+                                  </div>
+
+                                  {/* Player Reg */}
+                                  <div id={`player-${idx}-reg`} className="flex flex-col gap-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
+                                      Register No
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={player.reg}
+                                      onChange={(e) => handlePlayerChange(idx, 'reg', e.target.value)}
+                                      className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
+                                        teamErrors[`player-${idx}-reg`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                      }`}
+                                      placeholder="7 digits"
+                                      maxLength={7}
+                                    />
+                                    {teamErrors[`player-${idx}-reg`] && (
+                                      <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-reg`]}</span>
+                                    )}
+                                  </div>
+
+                                  {/* Player Email */}
+                                  <div id={`player-${idx}-email`} className="flex flex-col gap-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
+                                      CHRIST Email
+                                    </label>
+                                    <input
+                                      type="email"
+                                      value={player.email}
+                                      onChange={(e) => handlePlayerChange(idx, 'email', e.target.value)}
+                                      className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
+                                        teamErrors[`player-${idx}-email`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
+                                      }`}
+                                      placeholder="name@christuniversity.in"
+                                    />
+                                    {teamErrors[`player-${idx}-email`] && (
+                                      <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-email`]}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* ================= SUBMISSION CONFIRMATION SUMMARY CARD ================= */}
+                      <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-200">
+                            Team Roster Summary
+                          </h4>
+                          <p className="text-xs text-zinc-500 font-light leading-relaxed max-w-md">
+                            Confirming {activeEvent.name} squad under captain {capName || '[Pending]'}. Roster registration check is currently active.
+                          </p>
+                          
+                          <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
+                            <span>Sport: <b className="text-blue-400">{activeEvent.name}</b></span>
+                            <span>Captain: <b className="text-zinc-200">{capName || 'Unfilled'}</b></span>
+                            <span>Players Entered: <b className="text-zinc-200">{filledPlayersCount} / {'size' in activeEvent ? activeEvent.size : 1}</b></span>
                           </div>
+                        </div>
 
-                          {/* Submit */}
-                          <button
-                            type="submit"
-                            className="w-full py-4 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-xs tracking-[0.3em] font-bold uppercase rounded-xl transition-all cursor-pointer mt-4"
-                          >
-                            Submit Registration
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                        <div className="w-full sm:w-auto shrink-0 bg-zinc-950/60 border border-zinc-800/80 px-6 py-4 rounded-2xl text-center">
+                          <span className="text-[9px] uppercase tracking-widest text-zinc-500 block">
+                            Roster Status
+                          </span>
+                          <span className={`text-xs font-bold uppercase tracking-wider mt-1 block ${
+                            filledPlayersCount === ('size' in activeEvent ? activeEvent.size : 1) ? 'text-green-500' : 'text-amber-500'
+                          }`}>
+                            {filledPlayersCount === ('size' in activeEvent ? activeEvent.size : 1) ? 'Complete' : 'Pending Details'}
+                          </span>
+                        </div>
+                      </div>
 
-              {/* ================= FORMS BLOCK: TEAM SPORTS ================= */}
-              {selectedCategory === 'team' && (
-                <div>
-                  <div className="text-center mb-12">
-                    <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-zinc-50">
-                      Team Sports Registration
-                    </h3>
-                    <p className="mt-2 text-xs text-zinc-500 font-light">
-                      Register as Team Captain below, pick your sport, and fill out your dynamic player roster.
-                    </p>
-                  </div>
+                      {/* UNDERTAKING SECTION */}
+                      <div id="undertaking-section" className={`mt-8 p-6 rounded-2xl border ${teamErrors.undertaking ? 'border-red-500/50 bg-red-500/5' : 'border-blue-500/20 bg-blue-500/5'} transition-all`}>
+                        <div className="flex items-start gap-4 cursor-pointer" onClick={() => setUndertakingAccepted(!undertakingAccepted)}>
+                          <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center shrink-0 ${undertakingAccepted ? 'bg-blue-600 border-blue-500' : 'bg-zinc-900 border-zinc-700'}`}>
+                            {undertakingAccepted && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-zinc-200 uppercase tracking-widest block mb-1">
+                              Captain Undertaking & Roster Verification
+                            </span>
+                            <span className="text-[10px] md:text-xs text-zinc-400 font-light leading-relaxed block">
+                              I confirm that all roster details are accurate and that team members are active students of the selected Department. I take responsibility as captain for ensuring my team follows all rules, regulations, and reporting schedules. Any misconduct may result in team disqualification.
+                            </span>
+                          </div>
+                        </div>
+                        {teamErrors.undertaking && <span className="text-[9px] text-red-500 block mt-3 ml-9">{teamErrors.undertaking}</span>}
+                      </div>
 
-                  {/* Dynamic picker grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
-                    {TEAM_SPORTS.map((event) => (
                       <button
-                        key={event.id}
-                        type="button"
-                        onClick={() => setSelectedEventId(event.id)}
-                        className={`p-5 text-left border rounded-2xl transition-all cursor-pointer ${
-                          selectedEventId === event.id
-                            ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                            : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
+                        type="submit"
+                        disabled={!undertakingAccepted}
+                        className={`w-full py-4 text-white text-xs tracking-[0.3em] font-bold uppercase rounded-xl transition-all mt-4 ${
+                          undertakingAccepted ? 'bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] cursor-pointer' : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                         }`}
                       >
-                        <h5 className="font-bold text-xs uppercase tracking-wider text-zinc-200">
-                          {event.name}
-                        </h5>
-                        <p className="mt-1 text-[9px] text-zinc-500 font-mono tracking-wider">
-                          {event.size} PLAYERS
-                        </p>
+                        Submit Team Registration
                       </button>
-                    ))}
-                  </div>
-
-                  {/* Form validation alert */}
-                  {teamErrors.event && (
-                    <div className="p-4 mb-8 bg-red-950/20 border border-red-900/50 rounded-xl text-xs text-red-400 font-medium">
-                      {teamErrors.event}
-                    </div>
-                  )}
-
-                  {/* RENDER FORM IF SPORT SELECTED */}
-                  {selectedEventId && activeSport && (
-                    <div>
-                      {isTeamSuccess ? (
-                        <div className="p-10 bg-zinc-900/40 border border-zinc-800 rounded-3xl backdrop-blur-md flex flex-col items-center justify-center text-center shadow-xl">
-                          <CheckCircle2 className="w-16 h-16 text-blue-500 mb-6 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-bounce" />
-                          <h4 className="text-2xl font-black uppercase text-zinc-100">
-                            Team Registered Successfully
-                          </h4>
-                          <p className="mt-3 text-xs text-zinc-400 max-w-sm leading-relaxed font-light">
-                            High five, Captain! The team roster sheets have been submitted. Final schedule dates and rules updates will be sent to your registered captain email address.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsTeamSuccess(false);
-                              setSelectedEventId('');
-                              setCapName('');
-                              setCapReg('');
-                              setCapEmail('');
-                              setCapPhone('');
-                              setCapSchool('');
-                              setCapDept('');
-                              setCapClass('');
-                              setCapSection('');
-                              setPlayers([]);
-                              setTeamConfirm1(false);
-                              setTeamConfirm2(false);
-                            }}
-                            className="mt-8 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-[10px] tracking-[0.2em] font-bold uppercase rounded-lg transition-all cursor-pointer"
-                          >
-                            Register Another Team
-                          </button>
-                        </div>
-                      ) : (
-                        <form onSubmit={handleTeamSubmit} className="space-y-8">
-                          
-                          {/* Selected display text field */}
-                          <div className="p-4 bg-zinc-900/50 border border-zinc-800/80 rounded-xl flex items-center justify-between">
-                            <div>
-                              <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
-                                Selected Sport
-                              </span>
-                              <span className="text-base font-bold uppercase tracking-wider text-blue-400 mt-1 block">
-                                {activeSport.name}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold block">
-                                Roster size
-                              </span>
-                              <span className="text-base font-mono font-bold text-zinc-300 mt-1 block">
-                                {activeSport.size} Players
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* ================= CAPTAIN PORTION ================= */}
-                          <div className="bg-blue-950/10 border border-blue-500/20 p-8 rounded-3xl backdrop-blur-md relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-                            
-                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400 mb-6 flex items-center gap-2">
-                              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px]">
-                                C
-                              </span>
-                              Team Captain Details
-                            </h4>
-
-                            <div className="space-y-6">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div id="capName" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Full Name
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={capName}
-                                    onChange={(e) => setCapName(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capName ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="Captain's full name"
-                                  />
-                                  {teamErrors.capName && <span className="text-[9px] text-red-500">{teamErrors.capName}</span>}
-                                </div>
-
-                                <div id="capReg" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Register Number (7 Digits)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={capReg}
-                                    onChange={(e) => setCapReg(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capReg ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="e.g. 2410123"
-                                    maxLength={7}
-                                  />
-                                  {teamErrors.capReg && <span className="text-[9px] text-red-500">{teamErrors.capReg}</span>}
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div id="capEmail" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    CHRIST Email Address
-                                  </label>
-                                  <input
-                                    type="email"
-                                    value={capEmail}
-                                    onChange={(e) => setCapEmail(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capEmail ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="name.surname@christuniversity.in"
-                                  />
-                                  {teamErrors.capEmail && <span className="text-[9px] text-red-500">{teamErrors.capEmail}</span>}
-                                </div>
-
-                                <div id="capPhone" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Phone Number (10 Digits)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={capPhone}
-                                    onChange={(e) => setCapPhone(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capPhone ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="e.g. 9876543210"
-                                    maxLength={10}
-                                  />
-                                  {teamErrors.capPhone && <span className="text-[9px] text-red-500">{teamErrors.capPhone}</span>}
-                                </div>
-                              </div>
-
-                              {/* Academic details */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div id="capSchool" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    School
-                                  </label>
-                                  <select
-                                    value={capSchool}
-                                    onChange={(e) => {
-                                      setCapSchool(e.target.value as SchoolType);
-                                      setCapDept(''); // reset dept
-                                    }}
-                                    className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  >
-                                    <option value="">Select School</option>
-                                    {Object.keys(SCHOOLS_DATA).map((school) => (
-                                      <option key={school} value={school}>
-                                        {school}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  {teamErrors.capSchool && <span className="text-[9px] text-red-500">{teamErrors.capSchool}</span>}
-                                </div>
-
-                                <div id="capDept" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Department
-                                  </label>
-                                  <select
-                                    value={capDept}
-                                    onChange={(e) => setCapDept(e.target.value)}
-                                    disabled={!capSchool}
-                                    className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                    <option value="">Select Department</option>
-                                    {capSchool &&
-                                      SCHOOLS_DATA[capSchool].map((dept) => (
-                                        <option key={dept} value={dept}>
-                                          {dept}
-                                        </option>
-                                      ))}
-                                  </select>
-                                  {teamErrors.capDept && <span className="text-[9px] text-red-500">{teamErrors.capDept}</span>}
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div id="capClass" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Class
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={capClass}
-                                    onChange={(e) => setCapClass(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capClass ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="e.g. 3 BSC CS"
-                                  />
-                                  {teamErrors.capClass && <span className="text-[9px] text-red-500">{teamErrors.capClass}</span>}
-                                </div>
-
-                                <div id="capSection" className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Section
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={capSection}
-                                    onChange={(e) => setCapSection(e.target.value)}
-                                    className={`bg-zinc-950 border text-zinc-100 text-xs px-4 py-3 rounded-xl focus:outline-none focus:ring-1 ${
-                                      teamErrors.capSection ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                    }`}
-                                    placeholder="e.g. A"
-                                  />
-                                  {teamErrors.capSection && <span className="text-[9px] text-red-500">{teamErrors.capSection}</span>}
-                                </div>
-                              </div>
-
-                            </div>
-                          </div>
-
-                          {/* ================= DYNAMIC PLAYERS ROSTER ================= */}
-                          <div className="space-y-6">
-                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">
-                              Active Roster ({activeSport.size - 1} Additional Members)
-                            </h4>
-
-                            <div className="grid grid-cols-1 gap-4">
-                              {players.map((player, idx) => {
-                                const playerNum = idx + 2;
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="p-6 bg-zinc-900/30 border border-zinc-800/80 rounded-2xl flex flex-col gap-4"
-                                  >
-                                    <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
-                                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                                        Player {playerNum} Details
-                                      </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                      {/* Player Name */}
-                                      <div id={`player-${idx}-name`} className="flex flex-col gap-1.5">
-                                        <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
-                                          Full Name
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={player.name}
-                                          onChange={(e) => handlePlayerChange(idx, 'name', e.target.value)}
-                                          className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
-                                            teamErrors[`player-${idx}-name`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                          }`}
-                                          placeholder="Player name"
-                                        />
-                                        {teamErrors[`player-${idx}-name`] && (
-                                          <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-name`]}</span>
-                                        )}
-                                      </div>
-
-                                      {/* Player Reg */}
-                                      <div id={`player-${idx}-reg`} className="flex flex-col gap-1.5">
-                                        <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
-                                          Register No
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={player.reg}
-                                          onChange={(e) => handlePlayerChange(idx, 'reg', e.target.value)}
-                                          className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
-                                            teamErrors[`player-${idx}-reg`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                          }`}
-                                          placeholder="7 digits"
-                                          maxLength={7}
-                                        />
-                                        {teamErrors[`player-${idx}-reg`] && (
-                                          <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-reg`]}</span>
-                                        )}
-                                      </div>
-
-                                      {/* Player Email */}
-                                      <div id={`player-${idx}-email`} className="flex flex-col gap-1.5">
-                                        <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">
-                                          CHRIST Email
-                                        </label>
-                                        <input
-                                          type="email"
-                                          value={player.email}
-                                          onChange={(e) => handlePlayerChange(idx, 'email', e.target.value)}
-                                          className={`bg-zinc-950 border text-zinc-100 text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 ${
-                                            teamErrors[`player-${idx}-email`] ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-blue-500'
-                                          }`}
-                                          placeholder="name@christuniversity.in"
-                                        />
-                                        {teamErrors[`player-${idx}-email`] && (
-                                          <span className="text-[8px] text-red-500">{teamErrors[`player-${idx}-email`]}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* ================= SUBMISSION CONFIRMATION SUMMARY CARD ================= */}
-                          <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-200">
-                                Team Roster Summary Check
-                              </h4>
-                              <p className="text-xs text-zinc-500 font-light leading-relaxed max-w-md">
-                                Confirming {activeSport.name} squad under captain {capName || '[Pending]'}. Roster registration check is currently active.
-                              </p>
-                              
-                              <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
-                                <span>Sport: <b className="text-blue-400">{activeSport.name}</b></span>
-                                <span>Captain: <b className="text-zinc-200">{capName || 'Unfilled'}</b></span>
-                                <span>Players Entered: <b className="text-zinc-200">{filledPlayersCount} / {activeSport.size}</b></span>
-                              </div>
-                            </div>
-
-                            <div className="w-full sm:w-auto shrink-0 bg-zinc-950/60 border border-zinc-800/80 px-6 py-4 rounded-2xl text-center">
-                              <span className="text-[9px] uppercase tracking-widest text-zinc-500 block">
-                                Roster Status
-                              </span>
-                              <span className={`text-xs font-bold uppercase tracking-wider mt-1 block ${
-                                filledPlayersCount === activeSport.size ? 'text-green-500' : 'text-amber-500'
-                              }`}>
-                                {filledPlayersCount === activeSport.size ? 'Complete' : 'Pending Details'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Checkboxes & Submit */}
-                          <div className="space-y-4 pt-4 border-t border-zinc-900">
-                            <label className="flex items-start gap-3 text-zinc-400 text-xs cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={teamConfirm1}
-                                onChange={(e) => setTeamConfirm1(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span>I confirm that the team roster details entered are verified and correct.</span>
-                            </label>
-
-                            <label className="flex items-start gap-3 text-zinc-400 text-xs cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={teamConfirm2}
-                                onChange={(e) => setTeamConfirm2(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span>I agree to abide by the rules of the Pedagogic League and take responsibility as captain.</span>
-                            </label>
-
-                            {teamErrors.confirm && (
-                              <span className="text-[9px] text-red-500 block">{teamErrors.confirm}</span>
-                            )}
-                          </div>
-
-                          <button
-                            type="submit"
-                            className="w-full py-4 bg-blue-600 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-xs tracking-[0.3em] font-bold uppercase rounded-xl transition-all cursor-pointer"
-                          >
-                            Submit Team Registration
-                          </button>
-                        </form>
-                      )}
-                    </div>
+                    </form>
                   )}
                 </div>
               )}
@@ -1182,6 +1247,34 @@ export default function PedagogicLeague() {
             </div>
           )}
 
+        </div>
+      </section>
+
+      {/* ================= SECTION 4: CHAMPIONSHIP SHOWCASE ================= */}
+      <section className="relative py-24 px-6 z-10 bg-zinc-900/10 border-t border-zinc-900/60">
+        <div className="max-w-4xl mx-auto text-center">
+          <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-6 filter drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]" />
+          <h2 className="text-sm md:text-base font-bold tracking-[0.4em] uppercase text-amber-500 mb-4">
+            The Ultimate Prize
+          </h2>
+          <h3 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-8 text-zinc-100">
+            School Championship
+          </h3>
+          <p className="text-sm md:text-base text-zinc-400 font-light max-w-2xl mx-auto leading-relaxed mb-12">
+            Every match won contributes directly to your School's overall championship tally. The School with the most accumulated points at the end of the League Stage lifts the trophy.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="bg-zinc-950 border border-amber-500/30 px-10 py-6 rounded-2xl flex flex-col items-center shadow-[0_0_30px_rgba(245,158,11,0.1)] min-w-[200px]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block mb-2">Winners</span>
+              <span className="text-4xl font-black text-amber-500 block">5 <span className="text-base text-amber-500/50">PTS</span></span>
+            </div>
+            
+            <div className="bg-zinc-950 border border-zinc-700/50 px-10 py-6 rounded-2xl flex flex-col items-center min-w-[200px]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block mb-2">Runners</span>
+              <span className="text-4xl font-black text-zinc-300 block">3 <span className="text-base text-zinc-500">PTS</span></span>
+            </div>
+          </div>
         </div>
       </section>
 
